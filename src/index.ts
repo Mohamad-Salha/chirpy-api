@@ -5,7 +5,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { config } from "./config.js";
 import { createUser, deleteAllUsers, getUserByEmail, updateUser, upgradeUserToChirpyRed } from "./db/queries/users.js";
 import { createChirp, getAllChirps, getChirpById, deleteChirpById } from "./db/queries/chirps.js";
-import { hashPassword, checkPasswordHash, makeJWT, validateJWT, getBearerToken, makeRefreshToken } from "./auth.js";
+import { hashPassword, checkPasswordHash, makeJWT, validateJWT, getBearerToken, makeRefreshToken, getAPIKey } from "./auth.js";
 import { createRefreshToken, getUserFromRefreshToken, revokeRefreshToken } from "./db/queries/refresh_tokens.js";
 
 
@@ -79,7 +79,20 @@ async function createChirpApi(req: express.Request, res: express.Response, next:
 }
 
 app.get("/api/chirps", async (req: express.Request, res: express.Response) => {
-	const chirps = await getAllChirps();
+	let authorId = "";
+	const authorIdQuery = req.query.authorId;
+	if (typeof authorIdQuery === "string") {
+		authorId = authorIdQuery;
+	}
+
+	const chirps = await getAllChirps(authorId || undefined);
+
+	const sortQuery = req.query.sort;
+	if (typeof sortQuery === "string" && sortQuery === "desc") {
+		chirps.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+	}
+	// default is already asc from the DB query, no sort needed
+
 	res.status(200).json(chirps);
 });
 
@@ -280,6 +293,18 @@ app.post("/admin/reset", handlerRest);
 // Polka (our payment provider) calls this every time a payment event occurs.
 // We only care about "user.upgraded" — everything else we acknowledge and ignore.
 app.post("/api/polka/webhooks", async (req: express.Request, res: express.Response) => {
+	// Verify the API key — only Polka knows this key, so only Polka can call this endpoint
+	try {
+		const apiKey = getAPIKey(req);
+		if (apiKey !== config.api.polkaKey) {
+			res.status(401).json({ error: "Unauthorized" });
+			return;
+		}
+	} catch {
+		res.status(401).json({ error: "Unauthorized" });
+		return;
+	}
+
 	const { event, data } = req.body;
 
 	// Idempotent: if we don't know this event type, just say "OK, got it" and move on.

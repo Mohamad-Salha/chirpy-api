@@ -55,6 +55,17 @@ export function getBearerToken(req: Request): string {
 	return parts[1].trim(); // the raw JWT string
 }
 
+// Extracts an API key from the Authorization header.
+// Expected format:  Authorization: ApiKey THE_KEY_HERE
+export function getAPIKey(req: Request): string {
+	const authHeader = req.get("Authorization") ?? "";
+	const parts = authHeader.split(" ");
+	if (parts.length !== 2 || parts[0].toLowerCase() !== "apikey" || !parts[1]) {
+		throw new Error("Authorization header is missing or not in ApiKey format");
+	}
+	return parts[1].trim();
+}
+
 // Generates a cryptographically random 256-bit (32-byte) token as a hex string.
 // This is used as a refresh token — it's NOT a JWT, just a random secret string
 // that we store in the database and hand to the client.

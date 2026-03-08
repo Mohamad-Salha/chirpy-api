@@ -15,11 +15,12 @@ export async function deleteAllChirps() {
 	await db.delete(chirps);
 }
 
-export async function getAllChirps() {
-	return await db
-		.select()
-		.from(chirps)
-		.orderBy(asc(chirps.createdAt));
+export async function getAllChirps(authorId?: string) {
+	const query = db.select().from(chirps);
+	if (authorId) {
+		return query.where(eq(chirps.userId, authorId)).orderBy(asc(chirps.createdAt));
+	}
+	return query.orderBy(asc(chirps.createdAt));
 }
 
 export async function getChirpById(id: string) {
