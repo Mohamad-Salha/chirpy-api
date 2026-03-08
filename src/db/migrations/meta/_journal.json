@@ -36,6 +36,20 @@
       "when": 1772827144080,
       "tag": "0004_cultured_magus",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1772918541854,
+      "tag": "0005_dashing_carnage",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1772973526380,
+      "tag": "0006_melted_puck",
+      "breakpoints": true
     }
   ]
 }

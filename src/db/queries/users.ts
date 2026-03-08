@@ -22,3 +22,21 @@ export async function getUserByEmail(email: string) {
 		.where(eq(users.email, email));
 	return result;
 }
+
+export async function updateUser(id: string, fields: { email: string; hashed_password: string }) {
+	const [result] = await db
+		.update(users)
+		.set(fields)
+		.where(eq(users.id, id))
+		.returning();
+	return result;
+}
+
+export async function upgradeUserToChirpyRed(id: string) {
+	const [result] = await db
+		.update(users)
+		.set({ isChirpyRed: true })
+		.where(eq(users.id, id))
+		.returning();
+	return result; // undefined if no row matched (user not found)
+}
